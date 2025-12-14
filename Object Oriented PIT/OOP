@@ -1,0 +1,314 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import javax.swing.*;
+
+/* =========================
+   MAIN APPLICATION
+   ========================= */
+public class StudentRequirementOrganizer extends JFrame {
+
+    private ArrayList<Task> tasks = new ArrayList<>();
+    private ArrayList<Folder> folders = new ArrayList<>();
+    private JPanel container;
+    private JComboBox<String> filterBox;
+
+    public StudentRequirementOrganizer() {
+        setTitle("Student Requirement Organizer");
+        setSize(900, 600);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+        JButton addTaskBtn = new JButton("Add Task");
+        JButton addFolderBtn = new JButton("Create Folder");
+
+        filterBox = new JComboBox<>(new String[]{"Tasks", "Done", "Folders"});
+
+        addTaskBtn.addActionListener(e -> openAddTaskDialog());
+        addFolderBtn.addActionListener(e -> openCreateFolderDialog());
+        filterBox.addActionListener(e -> refreshView());
+
+        topPanel.add(addTaskBtn);
+        topPanel.add(addFolderBtn);
+        topPanel.add(new JLabel("Show:"));
+        topPanel.add(filterBox);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        add(new JScrollPane(container), BorderLayout.CENTER);
+
+        setVisible(true);
+    }
+
+    private void refreshView() {
+        container.removeAll();
+        String filter = (String) filterBox.getSelectedItem();
+
+        if (filter.equals("Folders")) {
+            for (Folder folder : folders) {
+                JButton btn = new JButton(folder.getName());
+                btn.addActionListener(e -> openFolderView(folder));
+                container.add(btn);
+            }
+        } else {
+            tasks.sort(Comparator.comparing(Task::daysRemaining));
+            for (Task task : tasks) {
+                if (filter.equals("Tasks") && task.isDone()) continue;
+                if (filter.equals("Done") && !task.isDone()) continue;
+                container.add(createTaskCard(task));
+            }
+        }
+        container.revalidate();
+        container.repaint();
+    }
+
+    private JPanel createTaskCard(Task task) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setMaximumSize(new Dimension(800, 80));
+        panel.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+        panel.setBackground(task.isDone() ? Color.LIGHT_GRAY : task.getUrgencyColor());
+
+        JLabel label = new JLabel(task.getTitle() + " (" + task.getSubject() + ")");
+        label.setFont(new Font("Arial", Font.BOLD, 16));
+        panel.add(label, BorderLayout.CENTER);
+
+        panel.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                openTaskDetails(task);
+            }
+        });
+
+        return panel;
+    }
+
+    /* =========================
+       ADD TASK
+       ========================= */
+    private void openAddTaskDialog() {
+        JDialog dialog = new JDialog(this, "Add Task", true);
+        dialog.setSize(400, 400);
+        dialog.setLayout(new GridLayout(7,2,10,10));
+
+        JTextField subject = new JTextField();
+        JTextField title = new JTextField();
+        JTextArea desc = new JTextArea();
+        JTextField due = new JTextField("YYYY-MM-DD");
+
+        JComboBox<String> folderBox = new JComboBox<>();
+        folderBox.addItem("None");
+        for (Folder f : folders) folderBox.addItem(f.getName());
+
+        JButton save = new JButton("Save");
+
+        dialog.add(new JLabel("Subject:")); dialog.add(subject);
+        dialog.add(new JLabel("Activity Name:")); dialog.add(title);
+        dialog.add(new JLabel("Description:")); dialog.add(desc);
+        dialog.add(new JLabel("Due Date:")); dialog.add(due);
+        dialog.add(new JLabel("Folder:")); dialog.add(folderBox);
+        dialog.add(new JLabel("")); dialog.add(save);
+
+        save.addActionListener(e -> {
+            try {
+                Task task = new Task(subject.getText(), title.getText(), desc.getText(),
+                        LocalDate.parse(due.getText()));
+
+                if (!folderBox.getSelectedItem().equals("None")) {
+                    Folder f = getFolderByName(folderBox.getSelectedItem().toString());
+                    task.setFolder(f);
+                    f.addTask(task);
+                }
+
+                tasks.add(task);
+                dialog.dispose();
+                refreshView();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Invalid input.");
+            }
+        });
+
+        dialog.setVisible(true);
+    }
+
+    /* =========================
+       EDIT TASK
+       ========================= */
+    private void openEditTaskDialog(Task task) {
+        JDialog dialog = new JDialog(this, "Edit Task", true);
+        dialog.setSize(400, 350);
+        dialog.setLayout(new GridLayout(5,2,10,10));
+
+        JTextField subject = new JTextField(task.getSubject());
+        JTextField title = new JTextField(task.getTitle());
+        JTextArea desc = new JTextArea(task.getDescription());
+        JTextField due = new JTextField(task.getDueDate().toString());
+
+        JButton confirm = new JButton("Confirm");
+
+        dialog.add(new JLabel("Subject:")); dialog.add(subject);
+        dialog.add(new JLabel("Activity Name:")); dialog.add(title);
+        dialog.add(new JLabel("Description:")); dialog.add(desc);
+        dialog.add(new JLabel("Due Date:")); dialog.add(due);
+        dialog.add(new JLabel("")); dialog.add(confirm);
+
+        confirm.addActionListener(e -> {
+            try {
+                task.setSubject(subject.getText());
+                task.setTitle(title.getText());
+                task.setDescription(desc.getText());
+                task.setDueDate(LocalDate.parse(due.getText()));
+                dialog.dispose();
+                refreshView();
+                openTaskDetails(task);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Invalid input.");
+            }
+        });
+
+        dialog.setVisible(true);
+    }
+
+    /* =========================
+       TASK DETAILS
+       ========================= */
+    private void openTaskDetails(Task task) {
+        JDialog dialog = new JDialog(this, "Task Details", true);
+        dialog.setSize(450, 420);
+        dialog.setLayout(new GridLayout(0,1,10,10));
+
+        dialog.add(new JLabel("Activity Name: " + task.getTitle()));
+        dialog.add(new JLabel("Description: " + task.getDescription()));
+        dialog.add(new JLabel("Date Created: " + task.getDateCreated()));
+        dialog.add(new JLabel("Due Date: " + task.getDueDate()));
+        dialog.add(new JLabel("Time Remaining: " +
+                (task.isDone() ? "Completed" : task.daysRemaining() + " days")));
+
+        JProgressBar bar = new JProgressBar(0,100);
+        bar.setValue(task.isDone() ? 100 : task.getPanicLevel());
+        bar.setForeground(task.isDone() ? Color.GREEN : task.getUrgencyColor());
+        dialog.add(bar);
+
+        JButton delete = new JButton("Delete Task");
+
+        if (!task.isDone()) {
+            JButton done = new JButton("Mark as Done");
+            JButton edit = new JButton("Edit Task");
+
+            done.addActionListener(e -> {
+                task.setDone(true);
+                dialog.dispose();
+                refreshView();
+            });
+
+            edit.addActionListener(e -> {
+                dialog.dispose();
+                openEditTaskDialog(task);
+            });
+
+            dialog.add(done);
+            dialog.add(edit);
+        }
+
+        delete.addActionListener(e -> {
+            tasks.remove(task);
+            dialog.dispose();
+            refreshView();
+        });
+
+        dialog.add(delete);
+        dialog.setVisible(true);
+    }
+
+    /* =========================
+       FOLDERS
+       ========================= */
+    private void openCreateFolderDialog() {
+        String name = JOptionPane.showInputDialog(this, "Folder Name:");
+        if (name != null && !name.isEmpty()) {
+            folders.add(new Folder(name));
+            refreshView();
+        }
+    }
+
+    private void openFolderView(Folder folder) {
+        container.removeAll();
+        for (Task t : folder.getTasks()) {
+            container.add(createTaskCard(t));
+        }
+        container.revalidate();
+        container.repaint();
+    }
+
+    private Folder getFolderByName(String name) {
+        for (Folder f : folders)
+            if (f.getName().equals(name)) return f;
+        return null;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(StudentRequirementOrganizer::new);
+    }
+}
+
+/* =========================
+   TASK CLASS
+   ========================= */
+class Task {
+    private String subject, title, description;
+    private LocalDate dateCreated = LocalDate.now(), dueDate;
+    private boolean done;
+    private Folder folder;
+
+    public Task(String s, String t, String d, LocalDate due) {
+        subject = s; title = t; description = d; dueDate = due;
+    }
+
+    public String getSubject(){return subject;}
+    public String getTitle(){return title;}
+    public String getDescription(){return description;}
+    public LocalDate getDateCreated(){return dateCreated;}
+    public LocalDate getDueDate(){return dueDate;}
+    public boolean isDone(){return done;}
+
+    public void setSubject(String s){subject=s;}
+    public void setTitle(String t){title=t;}
+    public void setDescription(String d){description=d;}
+    public void setDueDate(LocalDate d){dueDate=d;}
+    public void setDone(boolean d){done=d;}
+    public void setFolder(Folder f){folder=f;}
+
+    public long daysRemaining() {
+        return ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
+    }
+
+    public Color getUrgencyColor() {
+        long d = daysRemaining();
+        if (d <= 1) return Color.RED;
+        if (d <= 3) return Color.YELLOW;
+        return Color.GREEN;
+    }
+
+    public int getPanicLevel() {
+        long d = daysRemaining();
+        if (d <= 0) return 100;
+        if (d >= 7) return 10;
+        return (int)(100 - (d * 100 / 7));
+    }
+}
+
+/* =========================
+   FOLDER CLASS
+   ========================= */
+class Folder {
+    private String name;
+    private ArrayList<Task> tasks = new ArrayList<>();
+    public Folder(String n){name=n;}
+    public String getName(){return name;}
+    public void addTask(Task t){tasks.add(t);}
+    public ArrayList<Task> getTasks(){return tasks;}
+}
