@@ -7,9 +7,7 @@ import javax.swing.*;
 
 
 
-/* =========================
-   MAIN APPLICATION
-   ========================= */
+//Main Application
 public class StudentRequirementOrganizer extends JFrame {
 
     private ArrayList<Task> tasks = new ArrayList<>();
@@ -90,9 +88,7 @@ public class StudentRequirementOrganizer extends JFrame {
         return panel;
     }
 
-    /* =========================
-       ADD TASK
-       ========================= */
+    //Add Task
     private void openAddTaskDialog() {
         JDialog dialog = new JDialog(this, "Add Task", true);
         dialog.setSize(400, 400);
@@ -138,9 +134,7 @@ public class StudentRequirementOrganizer extends JFrame {
         dialog.setVisible(true);
     }
 
-    /* =========================
-       EDIT TASK
-       ========================= */
+    //Edit Task
     private void openEditTaskDialog(Task task) {
         JDialog dialog = new JDialog(this, "Edit Task", true);
         dialog.setSize(400, 350);
@@ -176,9 +170,7 @@ public class StudentRequirementOrganizer extends JFrame {
         dialog.setVisible(true);
     }
 
-    /* =========================
-       TASK DETAILS
-       ========================= */
+    //Task Details
     private void openTaskDetails(Task task) {
         JDialog dialog = new JDialog(this, "Task Details", true);
         dialog.setSize(450, 420);
@@ -229,9 +221,7 @@ public class StudentRequirementOrganizer extends JFrame {
         dialog.setVisible(true);
     }
 
-    /* =========================
-       FOLDERS
-       ========================= */
+    //FOlders
     private void openCreateFolderDialog() {
         String name = JOptionPane.showInputDialog(this, "Folder Name:");
         if (name != null && !name.isEmpty()) {
@@ -266,9 +256,7 @@ public class StudentRequirementOrganizer extends JFrame {
     }
 }
 
-/* =========================
-   TASK CLASS
-   ========================= */
+//tASk class
 class Task {
     private String subject, title, description;
     private LocalDate dateCreated = LocalDate.now(), dueDate;
@@ -312,9 +300,7 @@ class Task {
     }
 }
 
-/* =========================
-   FOLDER CLASS
-   ========================= */
+//Folder class
 class Folder {
     private String name;
     private ArrayList<Task> tasks = new ArrayList<>();
