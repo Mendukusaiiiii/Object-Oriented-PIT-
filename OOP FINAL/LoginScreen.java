@@ -25,14 +25,16 @@ public class LoginScreen extends JFrame {
         // Limit to 10 digits only
         ((AbstractDocument) idField.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
-            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+                    throws BadLocationException {
                 if ((fb.getDocument().getLength() + string.length()) <= 10 && string.matches("\\d*")) {
                     super.insertString(fb, offset, string, attr);
                 }
             }
 
             @Override
-            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+            public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+                    throws BadLocationException {
                 if ((fb.getDocument().getLength() - length + text.length()) <= 10 && text.matches("\\d*")) {
                     super.replace(fb, offset, length, text, attrs);
                 }
@@ -55,17 +57,24 @@ public class LoginScreen extends JFrame {
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         add(loginBtn, gbc);
 
+        
         loginBtn.addActionListener(e -> {
             String username = userField.getText().trim();
             String studentId = idField.getText().trim();
 
-            if(username.isEmpty() || studentId.isEmpty()) {
+            if (username.isEmpty() || studentId.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please enter both fields.");
-            } else {
-                // Open the main application
-                SwingUtilities.invokeLater(() -> new StudentRequirementOrganizer());
-                dispose(); // Close the login screen
+                return;
             }
+
+            if (studentId.length() < 10) {
+                JOptionPane.showMessageDialog(this, "Student ID must be exactly 10 digits.");
+                return;
+            }
+
+            // Login successful
+            SwingUtilities.invokeLater(() -> new StudentRequirementOrganizer());
+            dispose();
         });
 
         setVisible(true);
