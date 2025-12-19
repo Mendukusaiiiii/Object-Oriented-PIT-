@@ -6,9 +6,8 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.text.*;
 
-/* =====================================================
-   LOGIN SCREEN
-   ===================================================== */
+//LOGIN SCREEN
+   
 class LoginScreen extends JFrame {
 
     public LoginScreen() {
@@ -28,7 +27,7 @@ class LoginScreen extends JFrame {
         JLabel idLabel = new JLabel("Student ID:");
         JTextField idField = new JTextField(15);
 
-        // 🔒 Limit Student ID to 10 digits only
+        
         ((AbstractDocument) idField.getDocument()).setDocumentFilter(new DocumentFilter() {
             @Override
             public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
@@ -76,7 +75,7 @@ class LoginScreen extends JFrame {
                 return;
             }
 
-            // ✅ Login success → open main system
+            
             new StudentRequirementOrganizer();
             dispose();
         });
@@ -85,9 +84,8 @@ class LoginScreen extends JFrame {
     }
 }
 
-/* =====================================================
-   MAIN APPLICATION
-   ===================================================== */
+//MAIN APPLICATION
+
 class StudentRequirementOrganizer extends JFrame {
 
     private ArrayList<Task> tasks = new ArrayList<>();
@@ -251,13 +249,21 @@ class StudentRequirementOrganizer extends JFrame {
     }
 
     private void openFolderView(Folder folder) {
-        container.removeAll();
-        for (Task t : folder.getTasks()) {
-            container.add(createTaskCard(t));
-        }
-        container.revalidate();
-        container.repaint();
+    container.removeAll();
+
+    ArrayList<Task> folderTasks = new ArrayList<>(folder.getTasks());
+
+    
+    folderTasks.sort(Comparator.comparing(Task::daysRemaining));
+
+    for (Task t : folderTasks) {
+        container.add(createTaskCard(t)); 
     }
+
+    container.revalidate();
+    container.repaint();
+}
+
 
     private Folder getFolderByName(String name) {
         for (Folder f : folders)
@@ -266,9 +272,8 @@ class StudentRequirementOrganizer extends JFrame {
     }
 }
 
-/* =====================================================
-   TASK CLASS
-   ===================================================== */
+//TASK CLASS
+
 class Task {
     private String subject, title, description;
     private LocalDate dateCreated = LocalDate.now(), dueDate;
@@ -301,9 +306,8 @@ class Task {
     }
 }
 
-/* =====================================================
-   FOLDER CLASS
-   ===================================================== */
+//FOLDER CLASS
+   
 class Folder {
     private String name;
     private ArrayList<Task> tasks = new ArrayList<>();
@@ -313,9 +317,8 @@ class Folder {
     public ArrayList<Task> getTasks(){return tasks;}
 }
 
-/* =====================================================
-   SINGLE ENTRY POINT
-   ===================================================== */
+//SINGLE ENTRY POINT
+
 public class StudentApp {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(LoginScreen::new);
